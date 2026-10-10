@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Confidence Rebirth Build Spec</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: internal working doc. Sticky phase nav, one column of phases, each a checklist with owner, time and cost. */
+:root{
+  color-scheme:light;
+  --paper:#F7F5F2;
+  --card:#FFFFFF;
+  --ink:#1D1A22;
+  --ink-2:#55505E;
+  --muted:#8C8694;
+  --line:#E3DFE6;
+  --cherry:#C9214A;
+  --plum:#5B45A8;
+  --plum-soft:#ECE8F7;
+  --ok:#1F6B42;
+  --ok-soft:#DDF1E5;
+  --gold-soft:#FBEFD6;
+  --gold:#7A5306;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif;letter-spacing:-.02em;line-height:1.1;margin:0;text-wrap:balance}
+p{margin:0 0 .8em;max-width:68ch}
+:focus-visible{outline:3px solid var(--plum);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:24px}
+@media (max-width:600px){.wrap{padding-inline:16px}}
+
+nav.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:rgba(247,245,242,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav.top .wrap{display:flex;align-items:center;gap:16px;height:56px}
+nav.top .mark{font-family:"Bricolage Grotesque";font-weight:800;white-space:nowrap}
+nav.top .links{display:flex;gap:2px;overflow-x:auto;margin-left:auto;scrollbar-width:none}
+nav.top .links::-webkit-scrollbar{display:none}
+nav.top a{text-decoration:none;color:var(--ink-2);font-size:14px;font-weight:500;padding:6px 10px;border-radius:999px;white-space:nowrap}
+nav.top a:hover{background:#ECE9EE;color:var(--ink)}
+
+header{padding-block:56px 32px}
+.tag{display:inline-block;font-size:13px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--plum-soft);color:var(--plum);margin-bottom:16px}
+header h1{font-size:clamp(40px,6vw,68px);font-weight:800}
+header p{color:var(--ink-2);font-size:19px;margin-top:14px}
+
+.summary{display:grid;grid-template-columns:repeat(4,1fr);border-top:2px solid var(--ink);margin-top:32px}
+.summary div{padding:16px 16px 0 0}
+.summary span{display:block;font-size:14px;color:var(--ink-2)}
+.summary b{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(26px,3.4vw,36px);font-variant-numeric:tabular-nums}
+@media (max-width:700px){.summary{grid-template-columns:1fr 1fr}.summary div{padding-bottom:12px}}
+
+section{padding-block:48px;border-top:1px solid var(--line)}
+.sh{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.sh h2{font-size:clamp(28px,4vw,40px);font-weight:800}
+.sh .meta{display:flex;gap:8px;flex-wrap:wrap}
+.pill{font-size:13px;font-weight:600;padding:5px 11px;border-radius:999px;background:#ECE9EE;color:var(--ink-2);white-space:nowrap}
+.pill.when{background:var(--plum-soft);color:var(--plum)}
+.pill.cost{background:var(--gold-soft);color:var(--gold)}
+.intro{color:var(--ink-2);margin-bottom:18px}
+
+.progress{height:6px;background:#E6E2EA;border-radius:999px;overflow:hidden;margin-bottom:14px}
+.progress i{display:block;height:100%;width:0;background:var(--ok);transition:width .2s}
+
+.steps{list-style:none;margin:0;padding:0;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.steps li{display:grid;grid-template-columns:28px 1fr auto;gap:14px;padding:16px 18px;border-top:1px solid var(--line);align-items:start}
+.steps li:first-child{border-top:0}
+.steps input{width:20px;height:20px;margin-top:2px;accent-color:var(--ok)}
+.steps .t{font-weight:600}
+.steps .d{color:var(--ink-2);font-size:15px;margin-top:2px}
+.steps .r{display:flex;flex-direction:column;align-items:flex-end;gap:6px;text-align:right}
+.steps li.done .t{color:var(--muted);text-decoration:line-through}
+.who{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--plum-soft);color:var(--plum);white-space:nowrap}
+.who.dani{background:#FBE4EA;color:var(--cherry)}
+.price{font-size:13px;font-weight:600;color:var(--gold);white-space:nowrap;font-variant-numeric:tabular-nums}
+.hrs{font-size:12px;color:var(--muted);white-space:nowrap}
+@media (max-width:640px){.steps li{grid-template-columns:24px 1fr}.steps .r{grid-column:2;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:flex-start}}
+
+.tablewrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:18px}
+table{width:100%;border-collapse:collapse;font-size:15px;min-width:620px}
+th,td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:13px;font-weight:600;color:var(--ink-2);background:#F2EFF4}
+td.n{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+tr.total td{font-weight:700;background:#F2EFF4;border-bottom:0}
+.note{font-size:14px;color:var(--muted);margin-top:12px}
+
+.gantt{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;overflow-x:auto}
+.grow{display:grid;grid-template-columns:180px repeat(6,1fr);gap:4px;align-items:center;min-width:620px;margin-bottom:6px}
+.grow.head{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px}
+.grow .lbl{font-size:14px;font-weight:600}
+.bar{height:22px;border-radius:6px;background:var(--plum)}
+.bar.c{background:var(--cherry)}
+.bar.o{background:var(--ok)}
+
+.callout{background:var(--ink);color:#F3EEF5;border-radius:18px;padding:22px 24px;margin-top:20px}
+.callout b{color:#fff}
+footer{padding-block:40px 60px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+
+<nav class="top" aria-label="Phases">
+  <div class="wrap">
+    <span class="mark">Build Spec</span>
+    <div class="links">
+      <a href="#timeline">Timeline</a>
+      <a href="#p0">0 Accounts</a>
+      <a href="#p1">1 Skool</a>
+      <a href="#p2">2 ManyChat</a>
+      <a href="#p3">3 Sales</a>
+      <a href="#p4">4 Course</a>
+      <a href="#p5">5 Launch</a>
+      <a href="#p6">6 Run it</a>
+      <a href="#costs">Costs</a>
+      <a href="#team">Team</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <span class="tag">Internal · Zita Network Ltd</span>
+    <h1>The Confidence Rebirth: build spec</h1>
+    <p>Everything we set up behind the scenes, in order. Steps, owners, time and cost. Tick as you go; progress saves in this browser.</p>
+    <div class="summary">
+      <div><span>Build time</span><b>6 weeks</b></div>
+      <div><span>Tools per month</span><b>~$255</b></div>
+      <div><span>One-off costs</span><b>~$1.2K</b></div>
+      <div><span>Our team hours</span><b>~70h</b></div>
+    </div>
+  </div>
+</header>
+
+<section id="timeline">
+  <div class="wrap">
+    <div class="sh"><h2>Timeline</h2></div>
+    <div class="gantt" role="img" aria-label="Six week build timeline">
+      <div class="grow head"><span></span><span>Wk 1</span><span>Wk 2</span><span>Wk 3</span><span>Wk 4</span><span>Wk 5</span><span>Wk 6</span></div>
+      <div class="grow"><span class="lbl">0 Accounts</span><span class="bar"></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="grow"><span class="lbl">1 Skool</span><span class="bar"></span><span class="bar"></span><span></span><span></span><span></span><span></span></div>
+      <div class="grow"><span class="lbl">2 ManyChat</span><span></span><span class="bar"></span><span class="bar"></span><span></span><span></span><span></span></div>
+      <div class="grow"><span class="lbl">3 Sales system</span><span></span><span></span><span class="bar"></span><span></span><span></span><span></span></div>
+      <div class="grow"><span class="lbl">4 Course</span><span></span><span></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span></span></div>
+      <div class="grow"><span class="lbl">5 Launch</span><span></span><span></span><span class="bar c"></span><span class="bar c"></span><span class="bar c"></span><span class="bar c"></span></div>
+      <div class="grow"><span class="lbl">6 Run it</span><span></span><span></span><span></span><span></span><span></span><span class="bar o"></span></div>
+    </div>
+    <p class="note">Week 6 is the first free workshop. Course launches to the Club after the first workshop, once filmed and edited.</p>
+  </div>
+</section>
+
+<section id="p0">
+  <div class="wrap">
+    <div class="sh"><h2>0 · Accounts and foundations</h2><div class="meta"><span class="pill when">Week 1</span><span class="pill">~4h</span><span class="pill cost">~$15 one-off</span></div></div>
+    <p class="intro">Everything in Dani's name. Our team added as admins. Logins in a shared password manager.</p>
+    <div class="progress"><i></i></div>
+    <ul class="steps">
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Sign the agreement</div><div class="d">Heads of terms, then solicitor review. Nothing gets built before this.</div></div><div class="r"><span class="who">Both</span><span class="price">£300–800 solicitor</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Password manager</div><div class="d">Bitwarden shared vault for every login below.</div></div><div class="r"><span class="who">Us</span><span class="price">Free</span><span class="hrs">15 min</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Domain: theconfidencerebirth.com</div><div class="d">Registered to Dani. Used for links and future pages.</div></div><div class="r"><span class="who">Us</span><span class="price">~$15/yr</span><span class="hrs">15 min</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Instagram @theconfidencerebirth</div><div class="d">Professional account. Also claim the handle on TikTok and YouTube.</div></div><div class="r"><span class="who">Us</span><span class="price">Free</span><span class="hrs">30 min</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Stripe account in Dani's name</div><div class="d">Her bank details. Give us team access with reporting view.</div></div><div class="r"><span class="who dani">Dani</span><span class="price">Free</span><span class="hrs">30 min</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Shared Google Drive</div><div class="d">Folders: brand, course, content, SOPs, reports.</div></div><div class="r"><span class="who">Us</span><span class="price">Free</span><span class="hrs">20 min</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Brand kit</div><div class="d">Logo, colours, fonts for The Confidence Rebirth. Canva brand kit.</div></div><div class="r"><span class="who">Us</span><span class="price">Canva Pro $15/mo</span><span class="hrs">2h</span></div></li>
+    </ul>
+  </div>
+</section>
+
+<section id="p1">
+  <div class="wrap">
+    <div class="sh"><h2>1 · Skool community</h2><div class="meta"><span class="pill when">Weeks 1–2</span><span class="pill">~12h</span><span class="pill cost">$99/mo</span></div></div>
+    <p class="intro">One Skool group, four tiers. Higher tiers include everything below.</p>
+    <div class="progress"><i></i></div>
+    <ul class="steps">
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Create group on Skool Pro</div><div class="d">Pro, not Hobby: 2.9% fee instead of 10%. 14 day trial first.</div></div><div class="r"><span class="who">Us</span><span class="price">$99/mo</span><span class="hrs">30 min</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Branding</div><div class="d">Cover, icon, about page, URL: skool.com/theconfidencerebirth.</div></div><div class="r"><span class="who">Us</span><span class="hrs">1h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Tiers and prices</div><div class="d">Free: workshop and announcements. Standard: Club $33/mo. Premium: Circle. VIP: Big Sis VIP. Circle and VIP access granted manually after Stripe payment.</div></div><div class="r"><span class="who">Us</span><span class="hrs">1h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Joining questions</div><div class="d">Phone number. Where do you want more confidence? How did you find us?</div></div><div class="r"><span class="who">Us</span><span class="hrs">15 min</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Categories and permissions</div><div class="d">Free tier: read only announcements. Club: chat, wins, questions. Circle and VIP: private spaces.</div></div><div class="r"><span class="who">Us</span><span class="hrs">1h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Classroom</div><div class="d">Free: workshop replays (7 days). Club: replay library, challenges. Course: modules. Circle and VIP: worksheets.</div></div><div class="r"><span class="who">Us</span><span class="hrs">2h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Calendar</div><div class="d">Monthly free workshop, monthly Club call, weekly Circle call. Recurring events with reminders.</div></div><div class="r"><span class="who">Us</span><span class="hrs">45 min</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Welcome and rules</div><div class="d">Pinned welcome video from Dani, community rules, pinned FAQ.</div></div><div class="r"><span class="who dani">Dani</span><span class="who">Us</span><span class="hrs">2h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Gamification</div><div class="d">Level names and unlocks. Top members each month win a spot at a live event.</div></div><div class="r"><span class="who">Us</span><span class="hrs">30 min</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Moderators added</div><div class="d">Two mods with admin rights on chat, not billing.</div></div><div class="r"><span class="who">Us</span><span class="hrs">15 min</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Test as a member</div><div class="d">Join on each tier with a test account. Check access, payments, emails.</div></div><div class="r"><span class="who">Us</span><span class="hrs">2h</span></div></li>
+    </ul>
+  </div>
+</section>
+
+<section id="p2">
+  <div class="wrap">
+    <div class="sh"><h2>2 · ManyChat DM automation</h2><div class="meta"><span class="pill when">Weeks 2–3</span><span class="pill">~16h</span><span class="pill cost">~$138/mo</span></div></div>
+    <p class="intro">Two separate ManyChat accounts. Dani's: keyword links only. Brand account: full AI assistant.</p>
+    <div class="progress"><i></i></div>
+    <ul class="steps">
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Test collab post comments first</div><div class="d">Check if ManyChat on the brand account catches comments on collab posts. If yes, Dani's ManyChat may not be needed.</div></div><div class="r"><span class="who">Us</span><span class="hrs">1h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">ManyChat for @danidmc</div><div class="d">Business plan for comment volume. Dani logs in once to connect Instagram (2FA).</div></div><div class="r"><span class="who dani">Dani</span><span class="who">Us</span><span class="price">~$99/mo</span><span class="hrs">30 min</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Keyword flows on Dani's account</div><div class="d">Comment or DM WORKSHOP sends the Skool link. No default reply, so her normal DMs are untouched.</div></div><div class="r"><span class="who">Us</span><span class="hrs">3h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">ManyChat for @theconfidencerebirth</div><div class="d">Pro plan to start. Upgrade if active contacts pass 2,500 a month.</div></div><div class="r"><span class="who">Us</span><span class="price">~$39/mo</span><span class="hrs">30 min</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">FAQ knowledge base</div><div class="d">Offers, prices, links, call times, refund policy, login help. The AI answers only from this.</div></div><div class="r"><span class="who">Us</span><span class="hrs">3h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">AI assistant and lead qualifier</div><div class="d">Answers questions. Asks qualifying questions for Circle and VIP, then sends the booking link.</div></div><div class="r"><span class="who">Us</span><span class="price">Optional AI API ~$20/mo</span><span class="hrs">4h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Human hand-off</div><div class="d">Refunds, billing disputes, anyone upset or vulnerable: straight to the care lead. AI never coaches.</div></div><div class="r"><span class="who">Us</span><span class="hrs">1h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Workshop reminder</div><div class="d">DM one hour before each live workshop to everyone who triggered the keyword.</div></div><div class="r"><span class="who">Us</span><span class="hrs">1h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Testing</div><div class="d">50+ real-style questions. Fix wrong answers before launch.</div></div><div class="r"><span class="who">Us</span><span class="hrs">3h</span></div></li>
+    </ul>
+  </div>
+</section>
+
+<section id="p3">
+  <div class="wrap">
+    <div class="sh"><h2>3 · High ticket sales system</h2><div class="meta"><span class="pill when">Week 3</span><span class="pill">~8h</span><span class="pill cost">Free tools</span></div></div>
+    <p class="intro">Circle ($3,333) and VIP ($8,888) sold on calls, paid by Stripe link, access granted in Skool.</p>
+    <div class="progress"><i></i></div>
+    <ul class="steps">
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Application form</div><div class="d">Tally form: goals, situation, budget, why now.</div></div><div class="r"><span class="who">Us</span><span class="price">Free</span><span class="hrs">1h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Booking calendar</div><div class="d">Calendly or Cal.com for the closer's sales calls. Linked from the form and the DM bot.</div></div><div class="r"><span class="who">Us</span><span class="price">Free</span><span class="hrs">30 min</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Stripe payment links</div><div class="d">Circle $3,333 and 3 × $1,199. VIP $8,888 and 2 × $4,555. In Dani's Stripe.</div></div><div class="r"><span class="who">Us</span><span class="price">1.5% + 20p UK cards</span><span class="hrs">1h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Sales call script</div><div class="d">Discovery, offer, objections, close. Written for the closer.</div></div><div class="r"><span class="who">Us</span><span class="hrs">3h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Access SOP</div><div class="d">Payment received, then: add to Skool tier, welcome DM, VIP intake call booked. Within 1 hour.</div></div><div class="r"><span class="who">Us</span><span class="hrs">1h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Sales tracker</div><div class="d">Sheet: lead, source, call date, outcome, amount. Feeds the monthly report and the 30% invoice.</div></div><div class="r"><span class="who">Us</span><span class="price">Free</span><span class="hrs">1h</span></div></li>
+    </ul>
+  </div>
+</section>
+
+<section id="p4">
+  <div class="wrap">
+    <div class="sh"><h2>4 · The Confidence Rebirth Course</h2><div class="meta"><span class="pill when">Weeks 3–5</span><span class="pill">~20h</span><span class="pill cost">~$300–800</span></div></div>
+    <p class="intro">Record once, sell forever. $888 with 3 months of the Club.</p>
+    <div class="progress"><i></i></div>
+    <ul class="steps">
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Course outline</div><div class="d">One module per area: body, work, love, money, travel, solo life. 3–5 short lessons each.</div></div><div class="r"><span class="who">Us</span><span class="who dani">Dani</span><span class="hrs">4h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Scripts and slides</div><div class="d">Talking points per lesson. Dani adds her stories.</div></div><div class="r"><span class="who">Us</span><span class="hrs">6h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Filming days</div><div class="d">2 days. Phone or camera, mic, lights. Or hire a videographer.</div></div><div class="r"><span class="who dani">Dani</span><span class="price">Kit ~$300 or crew ~$800</span><span class="hrs">2 days</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Editing</div><div class="d">Captions, branded intro, clean cuts.</div></div><div class="r"><span class="who">Us</span><span class="hrs">8h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Workbooks</div><div class="d">One PDF per module, designed in Canva.</div></div><div class="r"><span class="who">Us</span><span class="hrs">4h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Upload to Skool classroom</div><div class="d">Course classroom, unlocked on purchase. 3 months of Club access added.</div></div><div class="r"><span class="who">Us</span><span class="hrs">2h</span></div></li>
+    </ul>
+  </div>
+</section>
+
+<section id="p5">
+  <div class="wrap">
+    <div class="sh"><h2>5 · Launch</h2><div class="meta"><span class="pill when">Weeks 3–6</span><span class="pill">~8h</span><span class="pill cost">Optional ads</span></div></div>
+    <p class="intro">Matches the go to market plan in the proposal.</p>
+    <div class="progress"><i></i></div>
+    <ul class="steps">
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Week 3: Tease</div><div class="d">"Something's coming" stories and polls. Collect DM questions for the first workshop.</div></div><div class="r"><span class="who dani">Dani</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Week 4: Announce</div><div class="d">Comeback video. Keyword live on both accounts. Workshop poster.</div></div><div class="r"><span class="who dani">Dani</span><span class="who">Us</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Week 5: Build up</div><div class="d">Countdown stories. Confidence Crew channel gets first access.</div></div><div class="r"><span class="who dani">Dani</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Week 6: First free workshop</div><div class="d">Live in Skool. Mods on chat. Club pitch at the end. Replay up same night.</div></div><div class="r"><span class="who dani">Dani</span><span class="who">Us</span><span class="hrs">3h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Launch report</div><div class="d">Signups, attendance, Club joins, applications. Decide what to change for month 2.</div></div><div class="r"><span class="who">Us</span><span class="hrs">2h</span></div></li>
+    </ul>
+  </div>
+</section>
+
+<section id="p6">
+  <div class="wrap">
+    <div class="sh"><h2>6 · Run it every month</h2><div class="meta"><span class="pill when">Ongoing</span></div></div>
+    <p class="intro">The weekly and monthly rhythm once live.</p>
+    <div class="progress"><i></i></div>
+    <ul class="steps">
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Daily: community</div><div class="d">Mods welcome new members, answer chat, post prompts.</div></div><div class="r"><span class="who">Mods</span><span class="hrs">1h/day</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Daily: DMs and care</div><div class="d">Check AI hand-offs, reply to escalations within 24h.</div></div><div class="r"><span class="who">Care lead</span><span class="hrs">30 min/day</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Weekly: sales calls</div><div class="d">Closer runs booked calls, follows up no-shows.</div></div><div class="r"><span class="who">Closer</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Weekly: Circle call</div><div class="d">Event set, reminders sent, mod on chat, replay uploaded.</div></div><div class="r"><span class="who dani">Dani</span><span class="who">Us</span><span class="hrs">1h</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Monthly: free workshop and Club call</div><div class="d">Theme, poster, keyword, reminders, replay.</div></div><div class="r"><span class="who dani">Dani</span><span class="who">Us</span></div></li>
+      <li><input type="checkbox" aria-label="Done"><div><div class="t">Monthly: report and invoice</div><div class="d">Export Skool members CSV, Stripe totals, sales tracker. Send report. Invoice 30%.</div></div><div class="r"><span class="who">Us</span><span class="hrs">2h</span></div></li>
+    </ul>
+  </div>
+</section>
+
+<section id="costs">
+  <div class="wrap">
+    <div class="sh"><h2>Costs</h2></div>
+    <h3 style="font-size:20px;margin-bottom:12px">Monthly tools</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Tool</th><th>What for</th><th>Plan</th><th>Per month</th></tr></thead>
+        <tbody>
+          <tr><td>Skool</td><td>Community, live calls, courses, Club payments</td><td>Pro</td><td class="n">$99</td></tr>
+          <tr><td>ManyChat · @danidmc</td><td>Keyword links</td><td>Business</td><td class="n">~$99</td></tr>
+          <tr><td>ManyChat · brand account</td><td>AI assistant and qualifier</td><td>Pro</td><td class="n">~$39</td></tr>
+          <tr><td>Canva</td><td>Posters, workbooks, brand kit</td><td>Pro</td><td class="n">~$15</td></tr>
+          <tr><td>AI API (optional)</td><td>Smarter DM answers</td><td>Pay as you go</td><td class="n">~$0–20</td></tr>
+          <tr><td>Tally, Calendly, Bitwarden, Drive</td><td>Forms, bookings, logins, files</td><td>Free tiers</td><td class="n">$0</td></tr>
+          <tr class="total"><td>Total</td><td></td><td></td><td class="n">~$252–272</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3 style="font-size:20px;margin:28px 0 12px">Fees on sales</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Where</th><th>Fee</th><th>Applies to</th></tr></thead>
+        <tbody>
+          <tr><td>Skool Pro</td><td class="n">2.9%</td><td>Club and course payments taken in Skool</td></tr>
+          <tr><td>Stripe, UK cards</td><td class="n">1.5% + 20p</td><td>Circle and VIP payment links</td></tr>
+          <tr><td>Stripe, EEA cards</td><td class="n">2.5% + 20p</td><td>European buyers</td></tr>
+          <tr><td>Stripe, international cards</td><td class="n">3.15% + 20p, +2% if converting currency</td><td>US and other buyers</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3 style="font-size:20px;margin:28px 0 12px">One-off</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Item</th><th>Cost</th></tr></thead>
+        <tbody>
+          <tr><td>Domain, first year</td><td class="n">~$15</td></tr>
+          <tr><td>Solicitor review of agreement</td><td class="n">~£300–800</td></tr>
+          <tr><td>Course filming: own kit, or hired crew</td><td class="n">~$300–800</td></tr>
+          <tr class="total"><td>Total</td><td class="n">~$700–1,700</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout"><b>Agree who pays.</b> Tool costs, filming and any ads need a line in the agreement: paid by Dani, by us, or taken off revenue before the split.</div>
+    <p class="note">Prices checked October 2026 from public pricing pages and comparison sites. Confirm on each provider before paying. Stripe rates from stripe.com/gb/pricing.</p>
+  </div>
+</section>
+
+<section id="team">
+  <div class="wrap">
+    <div class="sh"><h2>Team</h2></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Role</th><th>Does</th><th>Time</th><th>Typical pay model</th></tr></thead>
+        <tbody>
+          <tr><td><b>Growth lead</b> (you)</td><td>Strategy, build, reporting, Dani relationship</td><td>Lead</td><td>The 30%</td></tr>
+          <tr><td><b>Community mods</b> × 2</td><td>Daily chat, welcomes, live call moderation</td><td>~1h/day each</td><td>Part time, hourly VA</td></tr>
+          <tr><td><b>Care lead</b></td><td>AI hand-offs, access issues, refunds</td><td>~30 min/day</td><td>Part time, hourly</td></tr>
+          <tr><td><b>Sales closer</b></td><td>Circle and VIP calls, follow ups</td><td>As booked</td><td>Commission on closed sales, often 10–15%</td></tr>
+          <tr><td><b>Editor</b></td><td>Course videos, workshop replays, clips</td><td>Per project</td><td>Freelance, per video</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Team costs come out of our 30% unless the agreement says otherwise. Decide before signing.</p>
+  </div>
+</section>
+
+<footer><div class="wrap">Internal. Zita Network Ltd. Not for sharing with Dani.</div></footer>
+
+<script>
+(function(){
+  var key='cr-build-v1', saved={};
+  try{saved=JSON.parse(localStorage.getItem(key)||'{}')}catch(e){}
+  var boxes=[].slice.call(document.querySelectorAll('.steps input'));
+  boxes.forEach(function(b,i){
+    b.id='s'+i;
+    if(saved[i]){b.checked=true;b.closest('li').classList.add('done')}
+    b.addEventListener('change',function(){
+      b.closest('li').classList.toggle('done',b.checked);
+      saved[i]=b.checked;
+      try{localStorage.setItem(key,JSON.stringify(saved))}catch(e){}
+      bars();
+    });
+  });
+  function bars(){
+    [].slice.call(document.querySelectorAll('section')).forEach(function(sec){
+      var bar=sec.querySelector('.progress i'); if(!bar)return;
+      var all=sec.querySelectorAll('.steps input'), done=sec.querySelectorAll('.steps input:checked');
+      bar.style.width=(all.length?done.length/all.length*100:0)+'%';
+    });
+  }
+  bars();
+})();
+</script>
+</body>
+</html>
